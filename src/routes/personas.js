@@ -1,4 +1,5 @@
 const e = require("express");
+const { Router } = require("express");
 const express = require("express");
 const router = express.Router();
 
@@ -220,6 +221,62 @@ router.post("/usuario/modificarUsuario", (req, res) => {
       }
     }
   );
+});
+
+// Permite generar una nueva cuenta de usuario a partir del correo electrónico y la clave personal introducida por el usuario.
+
+router.post("/usuario/nuevoUsuario", (req, res) => {
+  const { correo, contrasenia } = req.body;
+  const query = `CALL password_to_user(?, ?);`;
+  mysqlConnect.query(query, [correo, contrasenia], (err, rows, fields) => {
+    if (!err) {
+      res.json({
+        code: 201,
+        data: {},
+        message: "Se pudo registrar al usuario",
+      });
+    } else {
+      if (err) {
+        console.log(err);
+        res.json({
+          code: 409,
+          data: {},
+          message: "Error, no se pudo registrar al usuario",
+        });
+      }
+    }
+  });
+});
+
+// Login del usuario en el sistema.
+
+router.post("/usuario/logIn", (req, res) => {
+  const { correo, contrasenia } = req.body;
+  if (correo && contrasenia) {
+    mysqlConnect.query(
+      "SELECT * FROM personas WHERE correo = ? AND contrasenia = ?",
+      [correo, contrasenia],
+      (err, rows, fields) => {
+        if (rows[0] !== undefined) {
+          res.json({
+            code: 200,
+            data: rows[0],
+            message: "Login OK, devuelve la información del usuario",
+          });
+        } else {
+          res.json({
+            code: 401,
+            data: {},
+            message: "Credenciales incorrectas",
+          });
+        }
+      }
+    );
+  } else {
+    res.json({
+      Status: "Ingresar datos",
+    });
+  }
 });
 
 module.exports = router;
