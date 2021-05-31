@@ -20,7 +20,7 @@ router.get("/personas", (req, res) => {
 // Permite registrar los datos de un postulante a usuario.
 
 router.post("/usuario/nuevoPostulante", (req, res) => {
-  const { documento, nombre, direccion, foto, correo, nacionalidad } = req.body;
+  const { documento, nombre, direccion, myblob, correo, nacionalidad } = req.body;
   const query = `CALL add_postulante(?, ?, ?, ?, ?, ?);`;
   mysqlConnect.query(
     query,
@@ -376,34 +376,33 @@ router.post("/usuario/validarCodigo", (req, res) => {
   }
 });
 
-
 //Devuelve la lista de subastas
 
 //el identificador de subastadores no es autoincrement, coincide con el identificador de la tabla personas. Ej: el subastador Juan se registra en la tabla persona y tiene un identificador, ese mismo identificador es el que le corresponde en el campo 'identificador' de la tabla subastadores
 //agregar columna 'titulo' a la tabla subastas
 router.post("/subastas/getSubastas", (req, res) => {
-
-  var data=[]
+  var data = [];
   mysqlConnect.query(
     "SELECT subastas.identificador, subastas.titulo, subastas.fecha, subastas.hora, personas.nombre, subastas.categoria, subastas.estado FROM subastas INNER JOIN personas ON subastas.subastador = personas.identificador;",
-    (err, rows, fields) => {      
-      for (var element in rows){ //para cada fila de la tabla crea un objeto elemento 'subasta'
-        var subasta={
-          idSubasta:rows[element]['identificador'],
-          titulo: rows[element]['titulo'],
-          fecha: rows[element]['fecha'],
-          hora: rows[element]['hora'],
-          rematador:rows[element]['nombre'],
-          categoria:rows[element]['categoria'],
-          estado:rows[element]['estado']
-        }
-        
-        console.log(subasta)
-        data.push(subasta)
+    (err, rows, fields) => {
+      for (var element in rows) {
+        //para cada fila de la tabla crea un objeto elemento 'subasta'
+        var subasta = {
+          idSubasta: rows[element]["identificador"],
+          titulo: rows[element]["titulo"],
+          fecha: rows[element]["fecha"],
+          hora: rows[element]["hora"],
+          rematador: rows[element]["nombre"],
+          categoria: rows[element]["categoria"],
+          estado: rows[element]["estado"],
+        };
+
+        console.log(subasta);
+        data.push(subasta);
       }
-      data=JSON.stringify(data)
+      data = JSON.stringify(data);
       if (!err) {
-        if (data.length!=0) {
+        if (data.length != 0) {
           res.json({
             code: 200,
             data: data,
@@ -428,5 +427,55 @@ router.post("/subastas/getSubastas", (req, res) => {
   );
 });
 
+//  Permite recuperar la lista de productos pertenecientes al catálogo de una subasta en particular
+//  nombre, moneda, fotoCatalogo, estado
+
+router.post("/subastas/getCatalogo", (req, res) => {
+  var data = [];
+  const { idSubasta } = req.body;
+  mysqlConnect.query(
+    "SELECT itemscatalogo.producto, catalogos.subasta, itemscatalogo.nombre, itemscatalogo.precioBase, itemscatalogo.moneda, itemscatalogo.fotoCatalogo, itemscatalogo.estado FROM itemscatalogo INNER JOIN catalogos ON itemscatalogo.codigo = catalogos.identificador INNER JOIN subastas ON catalogos.identificador = subastas.identificador WHERE subastas.identificador = ?;",
+    idSubasta,
+    (err, rows, fields) => {
+      for (var element in rows) {
+        const itemscatalogo = {
+          idProducto: rows[element]["producto"],
+          idSubasta: rows[element]["subasta"],
+          nombre: rows[element]["nombre"],
+          precioBase: rows[element]["precioBase"],
+          moneda: rows[element]["moneda"],
+          fotoCatalogo: rows[element]["fotoCatalogo"],
+          estado: rows[element]["estado"],
+        };
+        console.log(itemscatalogo);
+        data.push(itemscatalogo);
+      }
+      data = JSON.stringify(data);
+      if (!err) {
+        if (data.length != 0) {
+          res.json({
+            code: 200,
+            data: data,
+            message:
+              "Devuelve la lista de objetos pertenecientes al catálogo de la subasta",
+          });
+        } else {
+          res.json({
+            code: 204,
+            data: {},
+            message: "No hay items en el catalogo para esa subasta",
+          });
+        }
+      } else {
+        console.log(err);
+        res.json({
+          code: 500,
+          data: {},
+          message: "Error",
+        });
+      }
+    }
+  );
+});
 
 module.exports = router;
