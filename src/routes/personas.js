@@ -20,11 +20,12 @@ router.get("/personas", (req, res) => {
 // Permite registrar los datos de un postulante a usuario.
 
 router.post("/usuario/nuevoPostulante", (req, res) => {
-  const { documento, nombre, direccion, myblob, correo, nacionalidad } = req.body;
+  const { documento, nombre, direccion, foto, correo, nacionalidad } = req.body;
+  console.log({foto, direccion});
   const query = `CALL add_postulante(?, ?, ?, ?, ?, ?);`;
   mysqlConnect.query(
     query,
-    [documento, nombre, direccion, myblob, correo, nacionalidad],
+    [documento, nombre, direccion, foto, correo, nacionalidad],
     (err, rows, fields) => {
       if (!err) {
         res.json({
@@ -434,7 +435,7 @@ router.post("/subastas/getCatalogo", (req, res) => {
   var data = [];
   const { idSubasta } = req.body;
   mysqlConnect.query(
-    "SELECT itemscatalogo.producto, catalogos.subasta, itemscatalogo.nombre, itemscatalogo.precioBase, itemscatalogo.moneda, itemscatalogo.fotoCatalogo, itemscatalogo.estado FROM itemscatalogo INNER JOIN catalogos ON itemscatalogo.codigo = catalogos.identificador INNER JOIN subastas ON catalogos.identificador = subastas.identificador WHERE subastas.identificador = ?;",
+    "SELECT itemscatalogo.producto, catalogos.subasta, itemscatalogo.nombre, itemscatalogo.precioBase, itemscatalogo.moneda, itemscatalogo.fotoCatalogo, itemscatalogo.estado FROM itemscatalogo INNER JOIN catalogos ON itemscatalogo.codigo  = catalogos.identificador INNER JOIN subastas ON catalogos.identificador = subastas.identificador WHERE subastas.identificador = ?;",
     idSubasta,
     (err, rows, fields) => {
       for (var element in rows) {
@@ -477,5 +478,7 @@ router.post("/subastas/getCatalogo", (req, res) => {
     }
   );
 });
+
+// Permite recuperar la información de un producto perteneciente a un catálogo.
 
 module.exports = router;
