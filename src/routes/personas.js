@@ -24,7 +24,7 @@ router.post("/usuario/nuevoPostulante", (req, res) => {
   const query = `CALL add_postulante(?, ?, ?, ?, ?, ?);`;
   mysqlConnect.query(
     query,
-    [documento, nombre, direccion, foto, correo, nacionalidad],
+    [documento, nombre, direccion, myblob, correo, nacionalidad],
     (err, rows, fields) => {
       if (!err) {
         res.json({
@@ -375,5 +375,58 @@ router.post("/usuario/validarCodigo", (req, res) => {
     res.json({ Status: "Ingresar datos" });
   }
 });
+
+
+//Devuelve la lista de subastas
+
+//el identificador de subastadores no es autoincrement, coincide con el identificador de la tabla personas. Ej: el subastador Juan se registra en la tabla persona y tiene un identificador, ese mismo identificador es el que le corresponde en el campo 'identificador' de la tabla subastadores
+//agregar columna 'titulo' a la tabla subastas
+router.post("/subastas/getSubastas", (req, res) => {
+
+  var data=[]
+  mysqlConnect.query(
+    "SELECT subastas.identificador, subastas.titulo, subastas.fecha, subastas.hora, personas.nombre, subastas.categoria, subastas.estado FROM subastas INNER JOIN personas ON subastas.subastador = personas.identificador;",
+    (err, rows, fields) => {      
+      for (var element in rows){ //para cada fila de la tabla crea un objeto elemento 'subasta'
+        var subasta={
+          idSubasta:rows[element]['identificador'],
+          titulo: rows[element]['titulo'],
+          fecha: rows[element]['fecha'],
+          hora: rows[element]['hora'],
+          rematador:rows[element]['nombre'],
+          categoria:rows[element]['categoria'],
+          estado:rows[element]['estado']
+        }
+        
+        console.log(subasta)
+        data.push(subasta)
+      }
+      data=JSON.stringify(data)
+      if (!err) {
+        if (data.length!=0) {
+          res.json({
+            code: 200,
+            data: data,
+            message: "Lista de subastas",
+          });
+        } else {
+          res.json({
+            code: 204,
+            data: {},
+            message: "No hay subastas cargadas",
+          });
+        }
+      } else {
+        console.log(err);
+        res.json({
+          code: 500,
+          data: {},
+          message: "Error",
+        });
+      }
+    }
+  );
+});
+
 
 module.exports = router;
