@@ -21,24 +21,41 @@ router.get("/personas", (req, res) => {
 
 router.post("/usuario/nuevoPostulante", (req, res) => {
   const { documento, nombre, direccion, foto, correo, nacionalidad } = req.body;
-  console.log({foto, direccion});
+  console.log({ foto, direccion });
   const query = `CALL add_postulante(?, ?, ?, ?, ?, ?);`;
   mysqlConnect.query(
-    query,
-    [documento, nombre, direccion, foto, correo, nacionalidad],
+    "SELECT * FROM personas WHERE documento = ?;",
+    [documento],
     (err, rows, fields) => {
       if (!err) {
-        res.json({
-          code: 201,
-          data: {},
-          message: "Se registra correctamente al usuario.",
-        });
-      } else {
+        if (rows == 0) {
+          mysqlConnect.query(
+            query,
+            [documento, nombre, direccion, foto, correo, nacionalidad],
+            (err, rows, fields) => {
+              if (!err) {
+                res.json({
+                  code: 201,
+                  data: {},
+                  message: "Se registra correctamente al usuario.",
+                });
+              }
+            }
+          );
+        } else {
+          res.json({
+            code: 409,
+            data: {},
+            message:
+              "El servidor no pudo procesar la solicitud porque el dni ingresado ya se encuentra registrado",
+          });
+        }
+      } else if (err) {
         console.log(err);
         res.json({
-          code: 409,
+          code: 500,
           data: {},
-          message: "Error en la creacion del usuario",
+          message: "Error",
         });
       }
     }
