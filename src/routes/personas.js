@@ -435,7 +435,7 @@ router.post("/subastas/getCatalogo", (req, res) => {
   var data = [];
   const { idSubasta } = req.body;
   mysqlConnect.query(
-    "SELECT itemscatalogo.producto, catalogos.subasta, itemscatalogo.nombre, itemscatalogo.precioBase, itemscatalogo.moneda, itemscatalogo.fotoCatalogo, itemscatalogo.estado FROM itemscatalogo INNER JOIN catalogos ON itemscatalogo.codigo = catalogos.subasta INNER JOIN subastas ON catalogos.subasta = subastas.identificador WHERE subastas.identificador = ?;",
+    "SELECT itemscatalogo.producto, catalogos.subasta, itemscatalogo.nombre, itemscatalogo.precioBase, itemscatalogo.moneda, itemscatalogo.fotoCatalogo, itemscatalogo.estado FROM itemscatalogo INNER JOIN catalogos ON catalogos.identificador = itemscatalogo.catalogo WHERE catalogos.subasta = ?;",
     idSubasta,
     (err, rows, fields) => {
       for (var element in rows) {
