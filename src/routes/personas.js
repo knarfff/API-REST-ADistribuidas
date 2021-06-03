@@ -402,14 +402,15 @@ router.post("/subastas/getSubastas", (req, res) => {
         data.push(subasta);
       }
       data = JSON.stringify(data);
+      console.log(data.length);
       if (!err) {
-        if (data.length != 0) {
+        if (data.length != 0 && data[1] != "]") {
           res.json({
             code: 200,
             data: data,
             message: "Lista de subastas",
           });
-        } else {
+        } else if(data[0] == "["){
           res.json({
             code: 204,
             data: {},
@@ -453,14 +454,14 @@ router.post("/subastas/getCatalogo", (req, res) => {
       }
       data = JSON.stringify(data);
       if (!err) {
-        if (data.length != 0) {
+        if (data.length != 0 && data[1] != "]") {
           res.json({
             code: 200,
             data: data,
             message:
               "Devuelve la lista de objetos pertenecientes al catálogo de la subasta",
           });
-        } else {
+        } else if(data[0] == "["){
           res.json({
             code: 204,
             data: {},
@@ -485,13 +486,13 @@ router.post("/subastas/getProducto", (req, res) => {
   var data = [];
   const { idProducto } = req.body;
   mysqlConnect.query(
-    "SELECT productos.identificador, subastaProducto.ultimaOferta, subastaProducto.dateTimeUltimaOferta, subastaProducto.documentoUltimaOferta, subastaProducto.precioVenta, productos.tipo, productos.duenio, productos.descripcionCompleta, productos.artista, productos.fechaArte, productos.historia, subastaProducto.estado FROM subastaProducto INNER JOIN productos ON (subastaProducto.producto = productos.identificador) WHERE productos.identificador = ?;",
+    "SELECT productos.identificador, itemscatalogo.precioBase, itemscatalogo.nombre, subastas.categoria, subastaProducto.ultimaOferta, subastaProducto.dateTimeUltimaOferta, subastaProducto.documentoUltimaOferta, subastaProducto.precioVenta, productos.tipo, productos.duenio, personas.documento, productos.descripcionCompleta, productos.artista, productos.fechaArte, productos.historia, fotos.foto, subastaProducto.estado FROM subastaProducto INNER JOIN productos ON (subastaProducto.producto = productos.identificador) INNER JOIN itemsCatalogo ON (productos.identificador = itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo = catalogos.identificador) INNER JOIN subastas ON (subastas.identificador = catalogos.subasta) INNER JOIN duenios ON (productos.duenio = duenios.identificador) INNER JOIN personas ON (personas.identificador = duenios.identificador) INNER JOIN fotos ON (fotos.producto = productos.identificador ) WHERE productos.identificador = ?;",
     idProducto,
     (err, rows, fields) => {
       for (var element in rows) {
         const productos = {
           idProducto: rows[element]["identificador"],
-          idSubasta: rows[element]["subastas.identificador"],
+         // idSubasta: rows[element]["identificador"], // No se qué onda acá
           nombre: rows[element]["nombre"],
           precioBase: rows[element]["precioBase"],
           ultimaOferta: rows[element]["ultimaOferta"],
@@ -517,13 +518,13 @@ router.post("/subastas/getProducto", (req, res) => {
       }
       data = JSON.stringify(data);
       if (!err) {
-        if (data.length != 0) {
+        if (data.length != 0 && data[1] != "]") {
           res.json({
             code: 200,
             data: data,
             message: "Devuelve toda la información del producto consultado",
           });
-        } else {
+        } else if(data[0] == "["){
           res.json({
             code: 204,
             data: {},
@@ -546,10 +547,10 @@ router.post("/subastas/getProducto", (req, res) => {
 
 router.post("/usuario/getMetodosPago", (req, res) => {
   var data = [];
-  const { identificador } = req.body;
+  const { documento } = req.body;
   mysqlConnect.query(
-    "SELECT metododepago.idMetodo, metododepago.nombreMetodo, personas.nombre, metododepago.numeroTarjeta, personas.documento, metododepago.codigoSeguridad, metododepago.vencimiento, metododepago.tipoTarjeta, metododepago.tarjeta, metododepago.banco, metododepago.tipoMetodo, metododepago.estado, metododepago.cbu, metododepago.alias, metododepago.numeroCuenta, metododepago.cuit FROM metododepago INNER JOIN personas ON metododepago.duenio = personas.identificador WHERE personas.identificador = ?;",
-    [identificador],
+    "SELECT metododepago.idMetodo, metododepago.nombreMetodo, personas.nombre, metododepago.numeroTarjeta, personas.documento, metododepago.codigoSeguridad, metododepago.vencimiento, metododepago.tipoTarjeta, metododepago.tarjeta, metododepago.banco, metododepago.tipoMetodo, metododepago.estado, metododepago.cbu, metododepago.alias, metododepago.numeroCuenta, metododepago.cuit FROM metododepago INNER JOIN personas ON metododepago.duenio = personas.identificador WHERE personas.documento = ?;",
+    [documento],
     (err, rows, fields) => {
       for (var element in rows) {
         const metodos = {
@@ -574,15 +575,16 @@ router.post("/usuario/getMetodosPago", (req, res) => {
         data.push(metodos);
       }
       data = JSON.stringify(data);
+      console.log(`La longitud de la data es: ${data.length}`);
       if (!err) {
-        if (data.length != 0) {
+        if (data.length != 0 && data[1] != "]") {
           res.json({
             code: 200,
             data: data,
             message:
-              "Devuelve una lista con la información de los diferentes métodos de pago registrados. ",
+              "Devuelve una lista con la información de los diferentes métodos de pago registrados.",
           });
-        } else {
+        } else if(data[0] == "["){
           res.json({
             code: 204,
             data: {},
