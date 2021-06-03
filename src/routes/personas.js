@@ -481,4 +481,125 @@ router.post("/subastas/getCatalogo", (req, res) => {
 
 // Permite recuperar la información de un producto perteneciente a un catálogo.
 
+router.post("/subastas/getProducto", (req, res) => {
+  var data = [];
+  const { idProducto } = req.body;
+  mysqlConnect.query(
+    "SELECT productos.identificador, subastaProducto.ultimaOferta, subastaProducto.dateTimeUltimaOferta, subastaProducto.documentoUltimaOferta, subastaProducto.precioVenta, productos.tipo, productos.duenio, productos.descripcionCompleta, productos.artista, productos.fechaArte, productos.historia, subastaProducto.estado FROM subastaProducto INNER JOIN productos ON (subastaProducto.producto = productos.identificador) WHERE productos.identificador = ?;",
+    idProducto,
+    (err, rows, fields) => {
+      for (var element in rows) {
+        const productos = {
+          idProducto: rows[element]["identificador"],
+          idSubasta: rows[element]["subastas.identificador"],
+          nombre: rows[element]["nombre"],
+          precioBase: rows[element]["precioBase"],
+          ultimaOferta: rows[element]["ultimaOferta"],
+          dateTimeUltimaOferta: rows[element]["dateTimeUltimaOferta"],
+          documentoUltimaOferta: rows[element]["documentoUltimaOferta"],
+          precioVenta: rows[element]["precioVenta"],
+          tipo: rows[element]["tipo"],
+          duenioActual: rows[element]["duenio"],
+          documentoDuenioActual: rows[element]["documento"],
+          descripcion: rows[element]["descripcionCompleta"],
+          numeroItem: rows[element]["identificador"],
+          arte: {
+            artista: rows[element]["artista"],
+            fechaArte: rows[element]["fechaArte"],
+            historia: rows[element]["historia"],
+          },
+          fotos: { foto: rows[element]["foto"] },
+          categoria: rows[element]["categoria"],
+          estado: rows[element]["estado"],
+        };
+        console.log(productos);
+        data.push(productos);
+      }
+      data = JSON.stringify(data);
+      if (!err) {
+        if (data.length != 0) {
+          res.json({
+            code: 200,
+            data: data,
+            message: "Devuelve toda la información del producto consultado",
+          });
+        } else {
+          res.json({
+            code: 204,
+            data: {},
+            message: "Sin contenido",
+          });
+        }
+      } else {
+        console.log(err);
+        res.json({
+          code: 500,
+          data: {},
+          message: "Error",
+        });
+      }
+    }
+  );
+});
+
+// Permite recuperar los métodos de pago registrados por un usuario
+
+router.post("/usuario/getMetodosPago", (req, res) => {
+  var data = [];
+  const { identificador } = req.body;
+  mysqlConnect.query(
+    "SELECT metododepago.idMetodo, metododepago.nombreMetodo, personas.nombre, metododepago.numeroTarjeta, personas.documento, metododepago.codigoSeguridad, metododepago.vencimiento, metododepago.tipoTarjeta, metododepago.tarjeta, metododepago.banco, metododepago.tipoMetodo, metododepago.estado, metododepago.cbu, metododepago.alias, metododepago.numeroCuenta, metododepago.cuit FROM metododepago INNER JOIN personas ON metododepago.duenio = personas.identificador WHERE personas.identificador = ?;",
+    [identificador],
+    (err, rows, fields) => {
+      for (var element in rows) {
+        const metodos = {
+          idMetodo: rows[element]["idMetodo"],
+          nombreMetodo: rows[element]["nombreMetodo"],
+          nombreTitular: rows[element]["nombre"],
+          numeroTarjeta: rows[element]["numeroTarjeta"],
+          documentoTitular: rows[element]["documento"],
+          codigoSeguridad: rows[element]["codigoSeguridad"],
+          vencimiento: rows[element]["vencimiento"],
+          tipoTarjeta: rows[element]["tipoTarjeta"],
+          tarjeta: rows[element]["tarjeta"],
+          banco: rows[element]["banco"],
+          tipoMetodo: rows[element]["tipoMetodo"],
+          estado: rows[element]["estado"],
+          cbu: rows[element]["cbu"],
+          alias: rows[element]["alias"],
+          numeroCuenta: rows[element]["numeroCuenta"],
+          cuit: rows[element]["cuit"],
+        };
+        console.log(metodos);
+        data.push(metodos);
+      }
+      data = JSON.stringify(data);
+      if (!err) {
+        if (data.length != 0) {
+          res.json({
+            code: 200,
+            data: data,
+            message:
+              "Devuelve una lista con la información de los diferentes métodos de pago registrados. ",
+          });
+        } else {
+          res.json({
+            code: 204,
+            data: {},
+            message:
+              "El usuario no tiene métodos de pago registrados. Respuesta vacía",
+          });
+        }
+      } else {
+        console.log(err);
+        res.json({
+          code: 500,
+          data: {},
+          message: " Error interno en la recuperación de métodos de pago",
+        });
+      }
+    }
+  );
+});
+
 module.exports = router;
