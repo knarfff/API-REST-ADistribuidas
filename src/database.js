@@ -5,6 +5,7 @@ const mysqlConnect = mysql.createConnection({
   user: "root",
   password: "1090279", // Contraseña de la db
   database: "subastas", // Nombre de la base de datos a usar
+  multipleStatements: true,
 });
 
 mysqlConnect.connect(function (err) {
