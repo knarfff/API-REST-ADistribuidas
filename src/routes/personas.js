@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const randomstring = require("randomstring");
 
+
 const mysqlConnect = require("../database");
 
 // GET ALL FROM TABLE personas
@@ -435,7 +436,7 @@ router.post("/subastas/getCatalogo", (req, res) => {
           nombre: rows[element]["nombre"],
           precioBase: rows[element]["precioBase"],
           moneda: rows[element]["moneda"],
-          fotoCatalogo: rows[element]["fotoCatalogo"],
+          fotoCatalogo: (rows[element]["fotoCatalogo"]).toString(),
           estado: rows[element]["estado"],
         };
         console.log(itemscatalogo);
@@ -502,7 +503,7 @@ router.post("/subastas/getProducto", (req, res) => {
             fechaArte: rows[element]["fechaArte"],
             historia: rows[element]["historia"],
           },
-          fotos: { foto: rows[element]["foto"] },
+          fotos: { foto: (rows[element]["foto"]).toString() },
           categoria: rows[element]["categoria"],
           estado: rows[element]["estado"],
         };
