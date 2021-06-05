@@ -118,7 +118,9 @@ router.post("/usuario/validarCorreo", (req, res) => {
 // Permite recuperar la información de perfil de un usuario por documento
 
 router.post("/usuario/getUsuario", (req, res) => {
+  
   const { documento } = req.body;
+  console.log(documento)
   mysqlConnect.query(
     "SELECT * FROM personas WHERE documento = ?;",
     [documento],
@@ -191,33 +193,15 @@ router.post("/usuario/modificarUsuario", (req, res) => {
   const { documento, nombre, direccion, correo, nacionalidad, foto } = req.body;
   const query = `CALL edit_user(?, ?, ?, ?, ?, ?);`;
   mysqlConnect.query(
-    "SELECT * FROM personas WHERE correo = ?;",
-    [correo],
+    query,
+    [documento, nombre, direccion, correo, nacionalidad, foto],
     (err, rows, fields) => {
       if (!err) {
-        if (rows == 0) {
-          mysqlConnect.query(
-            query,
-            [documento, nombre, direccion, correo, nacionalidad, foto],
-            (err, rows, fields) => {
-              if (!err) {
-                res.json({
-                  code: 204,
-                  data: {},
-                  message: "El usuario fue modificado con éxito",
-                });
-              } else {
-                console.log(err);
-              }
-            }
-          );
-        } else {
-          res.json({
-            code: 409,
-            data: {},
-            message: "El correo electrónico ya está registrado",
-          });
-        }
+        res.json({
+          code: 204,
+          data: {},
+          message: "El usuario fue modificado con éxito",
+        });
       } else {
         console.log(err);
       }
