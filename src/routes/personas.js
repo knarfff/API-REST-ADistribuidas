@@ -472,71 +472,456 @@ router.post("/subastas/getCatalogo", (req, res) => {
   );
 });
 
+// // Permite recuperar la información de un producto perteneciente a un catálogo.
+
+// router.post("/subastas/getProducto", (req, res) => {
+//   var data = [];
+//   const { idProducto, idSubasta } = req.body;
+//   var queries = [
+//     "SELECT productos.identificador, itemscatalogo.precioBase, itemscatalogo.nombre, subastas.categoria, subastaProducto.ultimaOferta, subastaProducto.dateTimeUltimaOferta, subastaProducto.documentoUltimaOferta, subastaProducto.precioVenta, productos.tipo, productos.duenio, personas.documento, productos.descripcionCompleta, productos.artista, productos.fechaArte, productos.historia, subastaProducto.estado FROM subastaProducto INNER JOIN productos ON (subastaProducto.producto = productos.identificador) INNER JOIN itemsCatalogo ON (productos.identificador = itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo = catalogos.identificador) INNER JOIN subastas ON (subastas.identificador = catalogos.subasta) INNER JOIN duenios ON (productos.duenio = duenios.identificador) INNER JOIN personas ON (personas.identificador = duenios.identificador) WHERE productos.identificador = ?",
+//     "SELECT fotos.foto FROM fotos WHERE fotos.producto = ?",
+//   ];
+//   mysqlConnect.query(
+//     queries.join(";"),
+//     [idProducto, idProducto],
+//     (err, rows, fields) => {
+//       for (var element in rows) {
+//         const productos = {
+//           idProducto: rows[element]["identificador"],
+//           idSubasta: idSubasta,
+//           nombre: rows[element]["nombre"],
+//           precioBase: rows[element]["precioBase"],
+//           ultimaOferta: rows[element]["ultimaOferta"],
+//           dateTimeUltimaOferta: rows[element]["dateTimeUltimaOferta"],
+//           documentoUltimaOferta: rows[element]["documentoUltimaOferta"],
+//           precioVenta: rows[element]["precioVenta"],
+//           tipo: rows[element]["tipo"],
+//           duenioActual: rows[element]["duenio"],
+//           documentoDuenioActual: rows[element]["documento"],
+//           descripcion: rows[element]["descripcionCompleta"],
+//           numeroItem: rows[element]["identificador"],
+//           arte: {
+//             artista: rows[element]["artista"],
+//             fechaArte: rows[element]["fechaArte"],
+//             historia: rows[element]["historia"],
+//           },
+//           fotos: { foto: (rows[element]["foto"]).toString() },
+//           categoria: rows[element]["categoria"],
+//           estado: rows[element]["estado"],
+//         };
+//         console.log(productos);
+//         data.push(productos);
+//       }
+//       data = JSON.stringify(data);
+//       if (!err) {
+//         if (data.length != 0 && data[1] != "]") {
+//           res.json({
+//             code: 200,
+//             data: data,
+//             message: "Devuelve toda la información del producto consultado",
+//           });
+//         } else if (data[0] == "[") {
+//           res.json({
+//             code: 204,
+//             data: {},
+//             message: "Sin contenido",
+//           });
+//         }
+//       } else {
+//         console.log(err);
+//         res.json({
+//           code: 500,
+//           data: {},
+//           message: "Error",
+//         });
+//       }
+//     }
+//   );
+// });
+
 // Permite recuperar la información de un producto perteneciente a un catálogo.
 
 router.post("/subastas/getProducto", (req, res) => {
   var data = [];
-  const { idProducto, idSubasta } = req.body;
-  var queries = [
-    "SELECT productos.identificador, itemscatalogo.precioBase, itemscatalogo.nombre, subastas.categoria, subastaProducto.ultimaOferta, subastaProducto.dateTimeUltimaOferta, subastaProducto.documentoUltimaOferta, subastaProducto.precioVenta, productos.tipo, productos.duenio, personas.documento, productos.descripcionCompleta, productos.artista, productos.fechaArte, productos.historia, subastaProducto.estado FROM subastaProducto INNER JOIN productos ON (subastaProducto.producto = productos.identificador) INNER JOIN itemsCatalogo ON (productos.identificador = itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo = catalogos.identificador) INNER JOIN subastas ON (subastas.identificador = catalogos.subasta) INNER JOIN duenios ON (productos.duenio = duenios.identificador) INNER JOIN personas ON (personas.identificador = duenios.identificador) WHERE productos.identificador = ?",
-    "SELECT fotos.foto FROM fotos WHERE fotos.producto = ?",
-  ];
+  const { idProducto } = req.body;
   mysqlConnect.query(
-    queries.join(";"),
-    [idProducto, idProducto],
+    "SELECT subastaproducto.datetimeInicio,subastaproducto.dateTimeUltimaOferta, subastaproducto.estado, itemscatalogo.precioBase, subastaproducto.ultimaOferta FROM subastaproducto INNER JOIN itemscatalogo ON (itemscatalogo.producto=subastaproducto.producto) WHERE subastaproducto.producto=?",
+    [idProducto],
     (err, rows, fields) => {
-      for (var element in rows) {
-        const productos = {
-          idProducto: rows[element]["identificador"],
-          idSubasta: idSubasta,
-          nombre: rows[element]["nombre"],
-          precioBase: rows[element]["precioBase"],
-          ultimaOferta: rows[element]["ultimaOferta"],
-          dateTimeUltimaOferta: rows[element]["dateTimeUltimaOferta"],
-          documentoUltimaOferta: rows[element]["documentoUltimaOferta"],
-          precioVenta: rows[element]["precioVenta"],
-          tipo: rows[element]["tipo"],
-          duenioActual: rows[element]["duenio"],
-          documentoDuenioActual: rows[element]["documento"],
-          descripcion: rows[element]["descripcionCompleta"],
-          numeroItem: rows[element]["identificador"],
-          arte: {
-            artista: rows[element]["artista"],
-            fechaArte: rows[element]["fechaArte"],
-            historia: rows[element]["historia"],
-          },
-          fotos: { foto: (rows[element]["foto"]).toString() },
-          categoria: rows[element]["categoria"],
-          estado: rows[element]["estado"],
-        };
-        console.log(productos);
-        data.push(productos);
-      }
-      data = JSON.stringify(data);
       if (!err) {
-        if (data.length != 0 && data[1] != "]") {
-          res.json({
-            code: 200,
-            data: data,
-            message: "Devuelve toda la información del producto consultado",
-          });
-        } else if (data[0] == "[") {
-          res.json({
-            code: 204,
-            data: {},
-            message: "Sin contenido",
-          });
+        var actualDatetime = new Date();
+        var datetimeInicio = new Date (rows[0].datetimeInicio);
+        console.log(rows[0].dateTimeUltimaOferta)
+        if(rows[0].dateTimeUltimaOferta!=null){
+          var finishDatetime = new Date (rows[0].dateTimeUltimaOferta);
+          var auxMinutes=finishDatetime.getMinutes();
+          finishDatetime.setMinutes(auxMinutes+10);
         }
-      } else {
-        console.log(err);
+        else{
+          var finishDatetime = new Date (rows[0].datetimeInicio);
+          var auxMinutes=finishDatetime.getMinutes();
+          finishDatetime.setMinutes(auxMinutes+10);
+        }
+        
+        console.log(finishDatetime)
+        console.log(actualDatetime)
+        if(actualDatetime>datetimeInicio && actualDatetime<finishDatetime && rows[0].estado=="espera"){ //setear inicio de subastaproducto
+          mysqlConnect.query(
+            "UPDATE subastaproducto SET estado='iniciada', dateTimeUltimaOferta=?, ultimaOferta=? WHERE subastaproducto.producto=?",
+            [datetimeInicio,rows[0].precioBase,idProducto],
+            (err, rows, fields) => {
+              if (!err) {
+                mysqlConnect.query(
+                  "SELECT subastaproducto.datetimeInicio, productos.identificador as idProducto,subastas.identificador as idSubasta,itemscatalogo.nombre,itemscatalogo.moneda,itemscatalogo.precioBase, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.precioVenta, productos.tipo, personas.nombre as duenioActual, personas.documento, productos.descripcionCompleta, productos.artista,productos.fechaArte,productos.historia,subastas.categoria,subastaproducto.estado FROM productos INNER JOIN subastaproducto ON (productos.identificador=subastaproducto.producto) INNER JOIN itemscatalogo ON (productos.identificador=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (productos.duenio=personas.identificador) WHERE productos.identificador= ?",
+                  [idProducto],
+                  (err, rows, fields) => {
+                    const producto = {
+                      idProducto: rows[0]["idProducto"],
+                      idSubasta: rows[0]["idSubasta"],
+                      nombre: rows[0]["nombre"],
+                      precioBase: rows[0]["precioBase"],
+                      ultimaOferta: rows[0]["ultimaOferta"],
+                      dateTimeUltimaOferta: rows[0]["dateTimeUltimaOferta"],
+                      documentoUltimaOferta: rows[0]["documentoUltimaOferta"],
+                      precioVenta: rows[0]["precioVenta"],
+                      tipo: rows[0]["tipo"],
+                      duenioActual: rows[0]["duenioActual"],
+                      documentoDuenioActual: rows[0]["documento"],
+                      descripcion: rows[0]["descripcionCompleta"],
+                      numeroItem: rows[0]["idProducto"],
+                      moneda: rows[0]["moneda"],
+                      arte: {
+                        artista: rows[0]["artista"],
+                        fechaArte: rows[0]["fechaArte"],
+                        historia: rows[0]["historia"],
+                      },
+                      fotos: [],
+                      categoria: rows[0]["categoria"],
+                      estado: rows[0]["estado"],
+                      datetimeInicio: rows[0]["datetimeInicio"]
+                    };
+                    //data = JSON.stringify(producto);
+                    if (!err) {
+                      mysqlConnect.query(
+                        "SELECT fotos.foto FROM fotos WHERE producto=?;",
+                        [idProducto],
+                        (err, rows, fields) => {
+                          if (!err) {
+                            var fotos=[];
+                            for(var element in rows){
+                              console.log(rows[element].foto.toString());
+                              var foto={
+                                foto:rows[element].foto.toString()
+                              }
+                              fotos.push(foto);
+                            }
+                            console.log(fotos)
+                            producto.fotos=fotos;
+                            console.log(producto)
+                            data = JSON.stringify(producto);
+                            res.json({
+                              code: 200,
+                              data: data,
+                              message: "Devuelve toda la información del producto consultado",
+                            });
+                          }
+                          else {
+                            console.log(err);
+                            res.json({
+                              code: 500,
+                              data: {},
+                              message: "Error",
+                            });
+                          }
+                        });
+                      
+                    } else {
+                      console.log(err);
+                      res.json({
+                        code: 500,
+                        data: {},
+                        message: "Error",
+                      });
+                    }
+                  }
+                );
+              }
+              else{
+                res.json({
+                  code: 500,
+                  data: {},
+                  message: "Error",
+                });
+              }
+            })
+        }
+        else if(actualDatetime>finishDatetime && rows[0].estado=="iniciada"){
+          console.log(rows[0]["ultimaOferta"])
+          mysqlConnect.query(
+            "UPDATE subastaproducto SET estado = 'finalizada', precioVenta = ? WHERE producto = ?;",
+            [rows[0]["ultimaOferta"],idProducto], ()=>{
+              if (!err) {
+                mysqlConnect.query(
+                  "SELECT subastaproducto.datetimeInicio, productos.identificador as idProducto,subastas.identificador as idSubasta,itemscatalogo.nombre,itemscatalogo.moneda,itemscatalogo.precioBase, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.precioVenta, productos.tipo, personas.nombre as duenioActual, personas.documento, productos.descripcionCompleta, productos.artista,productos.fechaArte,productos.historia,subastas.categoria,subastaproducto.estado FROM productos INNER JOIN subastaproducto ON (productos.identificador=subastaproducto.producto) INNER JOIN itemscatalogo ON (productos.identificador=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (productos.duenio=personas.identificador) WHERE productos.identificador= ?",
+                  [idProducto],
+                  (err, rows, fields) => {
+                    const producto = {
+                      idProducto: rows[0]["idProducto"],
+                      idSubasta: rows[0]["idSubasta"],
+                      nombre: rows[0]["nombre"],
+                      precioBase: rows[0]["precioBase"],
+                      ultimaOferta: rows[0]["ultimaOferta"],
+                      dateTimeUltimaOferta: rows[0]["dateTimeUltimaOferta"],
+                      documentoUltimaOferta: rows[0]["documentoUltimaOferta"],
+                      precioVenta: rows[0]["precioVenta"],
+                      tipo: rows[0]["tipo"],
+                      duenioActual: rows[0]["duenioActual"],
+                      documentoDuenioActual: rows[0]["documento"],
+                      descripcion: rows[0]["descripcionCompleta"],
+                      numeroItem: rows[0]["idProducto"],
+                      moneda: rows[0]["moneda"],
+                      arte: {
+                        artista: rows[0]["artista"],
+                        fechaArte: rows[0]["fechaArte"],
+                        historia: rows[0]["historia"],
+                      },
+                      fotos: [],
+                      categoria: rows[0]["categoria"],
+                      estado: rows[0]["estado"],
+                      datetimeInicio: rows[0]["datetimeInicio"]
+                    };
+                    //data = JSON.stringify(producto);
+                    if (!err) {
+                      mysqlConnect.query(
+                        "SELECT fotos.foto FROM fotos WHERE producto=?;",
+                        [idProducto],
+                        (err, rows, fields) => {
+                          if (!err) {
+                            var fotos=[];
+                            for(var element in rows){
+                              //console.log(rows[element].foto.toString());
+                              var foto={
+                                foto:rows[element].foto.toString()
+                              }
+                              fotos.push(foto);
+                            }
+                            //console.log(fotos)
+                            producto.fotos=fotos;
+                            //console.log(producto)
+                            data = JSON.stringify(producto);
+                            res.json({
+                              code: 200,
+                              data: data,
+                              message: "Devuelve toda la información del producto consultado",
+                            });
+                          }
+                          else {
+                            console.log(err);
+                            res.json({
+                              code: 500,
+                              data: {},
+                              message: "Error",
+                            });
+                          }
+                        });
+                      
+                    } else {
+                      console.log(err);
+                      res.json({
+                        code: 500,
+                        data: {},
+                        message: "Error",
+                      });
+                    }
+                  }
+                );
+              }
+              else{
+                res.json({
+                  code: 500,
+                  data: {},
+                  message: "Error",
+                });
+              }
+            
+            })
+        }
+        else if(actualDatetime>finishDatetime && rows[0].estado=="espera"){
+          mysqlConnect.query(
+            "UPDATE subastaProducto SET estado = 'finalizada' WHERE producto = ?;",
+            [idProducto], ()=>{
+              if (!err) {
+                mysqlConnect.query(
+                  "SELECT subastaproducto.datetimeInicio, productos.identificador as idProducto,subastas.identificador as idSubasta,itemscatalogo.nombre,itemscatalogo.moneda,itemscatalogo.precioBase, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.precioVenta, productos.tipo, personas.nombre as duenioActual, personas.documento, productos.descripcionCompleta, productos.artista,productos.fechaArte,productos.historia,subastas.categoria,subastaproducto.estado FROM productos INNER JOIN subastaproducto ON (productos.identificador=subastaproducto.producto) INNER JOIN itemscatalogo ON (productos.identificador=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (productos.duenio=personas.identificador) WHERE productos.identificador= ?",
+                  [idProducto],
+                  (err, rows, fields) => {
+                    const producto = {
+                      idProducto: rows[0]["idProducto"],
+                      idSubasta: rows[0]["idSubasta"],
+                      nombre: rows[0]["nombre"],
+                      precioBase: rows[0]["precioBase"],
+                      ultimaOferta: rows[0]["ultimaOferta"],
+                      dateTimeUltimaOferta: rows[0]["dateTimeUltimaOferta"],
+                      documentoUltimaOferta: rows[0]["documentoUltimaOferta"],
+                      precioVenta: rows[0]["precioVenta"],
+                      tipo: rows[0]["tipo"],
+                      duenioActual: rows[0]["duenioActual"],
+                      documentoDuenioActual: rows[0]["documento"],
+                      descripcion: rows[0]["descripcionCompleta"],
+                      numeroItem: rows[0]["idProducto"],
+                      moneda: rows[0]["moneda"],
+                      arte: {
+                        artista: rows[0]["artista"],
+                        fechaArte: rows[0]["fechaArte"],
+                        historia: rows[0]["historia"],
+                      },
+                      fotos: [],
+                      categoria: rows[0]["categoria"],
+                      estado: rows[0]["estado"],
+                      datetimeInicio: rows[0]["datetimeInicio"]
+                    };
+                    //data = JSON.stringify(producto);
+                    if (!err) {
+                      mysqlConnect.query(
+                        "SELECT fotos.foto FROM fotos WHERE producto=?;",
+                        [idProducto],
+                        (err, rows, fields) => {
+                          if (!err) {
+                            var fotos=[];
+                            for(var element in rows){
+                              console.log(rows[element].foto.toString());
+                              var foto={
+                                foto:rows[element].foto.toString()
+                              }
+                              fotos.push(foto);
+                            }
+                            console.log(fotos)
+                            producto.fotos=fotos;
+                            console.log(producto)
+                            data = JSON.stringify(producto);
+                            res.json({
+                              code: 200,
+                              data: data,
+                              message: "Devuelve toda la información del producto consultado",
+                            });
+                          }
+                          else {
+                            console.log(err);
+                            res.json({
+                              code: 500,
+                              data: {},
+                              message: "Error",
+                            });
+                          }
+                        });
+                      
+                    } else {
+                      console.log(err);
+                      res.json({
+                        code: 500,
+                        data: {},
+                        message: "Error",
+                      });
+                    }
+                  }
+                );
+              }
+              else{
+                res.json({
+                  code: 500,
+                  data: {},
+                  message: "Error",
+                });
+              }
+            
+            })
+        }
+        else{
+          mysqlConnect.query(
+            "SELECT subastaproducto.datetimeInicio, productos.identificador as idProducto,subastas.identificador as idSubasta,itemscatalogo.nombre,itemscatalogo.moneda,itemscatalogo.precioBase, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.precioVenta, productos.tipo, personas.nombre as duenioActual, personas.documento, productos.descripcionCompleta, productos.artista,productos.fechaArte,productos.historia,subastas.categoria,subastaproducto.estado FROM productos INNER JOIN subastaproducto ON (productos.identificador=subastaproducto.producto) INNER JOIN itemscatalogo ON (productos.identificador=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (productos.duenio=personas.identificador) WHERE productos.identificador= ?",
+            [idProducto],
+            (err, rows, fields) => {
+              const producto = {
+                idProducto: rows[0]["idProducto"],
+                idSubasta: rows[0]["idSubasta"],
+                nombre: rows[0]["nombre"],
+                precioBase: rows[0]["precioBase"],
+                ultimaOferta: rows[0]["ultimaOferta"],
+                dateTimeUltimaOferta: rows[0]["dateTimeUltimaOferta"],
+                documentoUltimaOferta: rows[0]["documentoUltimaOferta"],
+                precioVenta: rows[0]["precioVenta"],
+                tipo: rows[0]["tipo"],
+                duenioActual: rows[0]["duenioActual"],
+                documentoDuenioActual: rows[0]["documento"],
+                descripcion: rows[0]["descripcionCompleta"],
+                numeroItem: rows[0]["idProducto"],
+                moneda: rows[0]["moneda"],
+                arte: {
+                  artista: rows[0]["artista"],
+                  fechaArte: rows[0]["fechaArte"],
+                  historia: rows[0]["historia"],
+                },
+                fotos: [],
+                categoria: rows[0]["categoria"],
+                estado: rows[0]["estado"],
+                datetimeInicio: rows[0]["datetimeInicio"]
+              };
+              //data = JSON.stringify(producto);
+              if (!err) {
+                mysqlConnect.query(
+                  "SELECT fotos.foto FROM fotos WHERE producto=?;",
+                  [idProducto],
+                  (err, rows, fields) => {
+                    if (!err) {
+                      var fotos=[];
+                      for(var element in rows){
+                        console.log(rows[element].foto.toString());
+                        var foto={
+                          foto:rows[element].foto.toString()
+                        }
+                        fotos.push(foto);
+                      }
+                      console.log(fotos)
+                      producto.fotos=fotos;
+                      console.log(producto)
+                      data = JSON.stringify(producto);
+                      res.json({
+                        code: 200,
+                        data: data,
+                        message: "Devuelve toda la información del producto consultado",
+                      });
+                    }
+                    else {
+                      console.log(err);
+                      res.json({
+                        code: 500,
+                        data: {},
+                        message: "Error",
+                      });
+                    }
+                  });
+                
+              } else {
+                console.log(err);
+                res.json({
+                  code: 500,
+                  data: {},
+                  message: "Error",
+                });
+              }
+            }
+          );
+        }
+      }
+      else{
         res.json({
           code: 500,
           data: {},
           message: "Error",
         });
       }
-    }
-  );
+    })
+  
 });
 
 // Permite recuperar los métodos de pago registrados por un usuario
@@ -604,33 +989,48 @@ router.post("/usuario/getMetodosPago", (req, res) => {
 
 router.post("/subastas/getSubastaActiva", (req, res) => {
   var data = [];
-  const { documento } = req.body;
+  const { documento, idSubasta } = req.body;
+  console.log(req.body)
   mysqlConnect.query(
-    "SELECT subastas.identificador, subastas.titulo, subastas.fecha, subastas.hora, subastas.subastador, subastas.categoria, subastas.estado FROM subastaProducto INNER JOIN productos ON (subastaProducto.producto = productos.identificador) INNER JOIN itemscatalogo ON (itemscatalogo.producto = productos.identificador) INNER JOIN catalogos ON (catalogos.identificador = itemscatalogo.catalogo) INNER JOIN subastas ON (catalogos.subasta = subastas.identificador) WHERE subastaProducto.documentoUltimaOferta = ?;",
-    documento,
+    "SELECT subastas.identificador, subastas.titulo, subastas.fecha, subastas.hora, subastas.subastador, subastas.categoria, subastaproducto.estado FROM subastaProducto INNER JOIN productos ON (subastaProducto.producto = productos.identificador) INNER JOIN itemscatalogo ON (itemscatalogo.producto = productos.identificador) INNER JOIN catalogos ON (catalogos.identificador = itemscatalogo.catalogo) INNER JOIN subastas ON (catalogos.subasta = subastas.identificador) WHERE subastaproducto.documentoUltimaOferta = ? AND subastas.identificador != ? AND subastaproducto.estado='iniciada' LIMIT 1;",
+    [documento, idSubasta],
     (err, rows, fields) => {
-      for (var element in rows) {
+      console.log(rows)
+      if(rows.length != 0){
         const subastaActiva = {
-          idSubasta: rows[element]["identificador"],
-          titulo: rows[element]["titulo"],
-          fecha: rows[element]["fecha"],
-          hora: rows[element]["hora"],
-          rematador: rows[element]["subastador"],
-          categoria: rows[element]["categoria"],
-          estado: rows[element]["estado"],
-        };
-        console.log(subastaActiva);
-        data.push(subastaActiva);
+          idSubasta: rows[0]["identificador"],
+          titulo: rows[0]["titulo"],
+          fecha: rows[0]["fecha"],
+          hora: rows[0]["hora"],
+          rematador: rows[0]["subastador"],
+          categoria: rows[0]["categoria"],
+          estado: rows[0]["estado"],
+         };
+        data.push(subastaActiva)        
       }
-      data = JSON.stringify(data);
+      
+      // for (var element in rows) {
+      //   const subastaActiva = {
+      //     idSubasta: rows[element]["identificador"],
+      //     titulo: rows[element]["titulo"],
+      //     fecha: rows[element]["fecha"],
+      //     hora: rows[element]["hora"],
+      //     rematador: rows[element]["subastador"],
+      //     categoria: rows[element]["categoria"],
+      //     estado: rows[element]["estado"],
+      //   };
+        // console.log(subastaActiva);
+        // data.push(subastaActiva);
+      //}
+      
       if (!err) {
-        if (data.length != 0 && data[1] != "]") {
+        if (data.length != 0 ) {
           res.json({
             code: 200,
-            data: data,
+            data: JSON.stringify(data[0]),
             message: "Devuelve la información de la subasta activa del usuario",
           });
-        } else if (data[0] == "[") {
+        } else{
           res.json({
             code: 204,
             data: {},
@@ -650,21 +1050,79 @@ router.post("/subastas/getSubastaActiva", (req, res) => {
   );
 });
 
-// Permite registrar una nueva oferta para un producto determinado
 
+
+// Permite registrar una nueva oferta para un producto determinado
 router.post("/subastas/nuevaOferta", (req, res) => {
-  var { documento, idMetodoPago, idProducto, ultimaOferta } = req.body;
-  var dateTimeUltimaOferta = new Date();
+  var { documento, idMetodoPago, idProducto, valorOferta } = req.body;
+  var dateTimeNuevaOferta = new Date();
   mysqlConnect.query(
-    "UPDATE subastaProducto SET ultimaOferta = ?, dateTimeUltimaOferta = ?, documentoUltimaOferta = ?, metodoDePago = ? WHERE producto = ?;",
-    [ultimaOferta, dateTimeUltimaOferta, documento, idMetodoPago, idProducto],
+    "SELECT subastaproducto.estado, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.producto, itemscatalogo.precioBase, subastas.categoria, personas.documento, productos.duenio FROM subastaproducto INNER JOIN productos ON (subastaproducto.producto=productos.identificador) INNER JOIN itemscatalogo ON (subastaproducto.producto=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (subastas.identificador=catalogos.identificador) INNER JOIN personas ON (personas.identificador=productos.duenio) WHERE subastaproducto.producto= ?;",
+    [idProducto],
     (err, rows, fields) => {
       if (!err) {
-        res.json({
-          code: 201,
-          data: {},
-          message: "La oferta se registró con éxito",
-        });
+        console.log(rows[0].categoria);
+        if(valorOferta>=0.01*rows[0].precioBase+rows[0].ultimaOferta){//chequea precio minimo //chequea precio maximo //chequea ultimo ofertante, no puede ser el mismo //el duenio no puede ser el mismo que el ofertante
+          if((rows[0].categoria!="platino" && rows[0].categoria!="oro" && valorOferta>1.2*rows[0].ultimaOferta) || rows[0].documentoUltimaOferta==documento || documento == rows[0].documento || rows[0].estado!="iniciada"){
+            res.json({
+              code: 500,
+              data: {},
+              message: "Error interno en el registro de la nueva oferta",
+            });
+          }
+          else{
+            var dateTimeUltimaOferta=new Date(rows[0].dateTimeUltimaOferta);
+            console.log(dateTimeUltimaOferta)
+            console.log(dateTimeNuevaOferta)
+            var auxMinutes=dateTimeUltimaOferta.getMinutes();
+            dateTimeUltimaOferta.setMinutes(auxMinutes+10);
+            if(dateTimeNuevaOferta>dateTimeUltimaOferta){//chequea fecha
+              console.log("se paso del tiempo")
+              console.log(dateTimeUltimaOferta)
+              //debe actualizar el estado a finalizada
+              mysqlConnect.query(
+                "UPDATE subastaProducto SET estado = 'finalizada', precioVenta=? WHERE producto = ?;",
+                [rows[0].ultimaOferta,idProducto], ()=>{})
+              res.json({
+                code: 500,
+                data: {},
+                message: "Error interno en el registro de la nueva oferta",
+              });
+              return;
+            }
+            else{//si la fecha esta OK, actualizar los valores de ultima oferta
+            
+              mysqlConnect.query(
+                "UPDATE subastaproducto SET ultimaOferta = ?, dateTimeUltimaOferta = ?, documentoUltimaOferta = ?, metodoDePago = ? WHERE producto = ?;",
+                [valorOferta, dateTimeNuevaOferta, documento, idMetodoPago, idProducto],
+                (err, rows, fields) => {
+                  if (!err) {
+                    res.json({
+                      code: 201,
+                      data: {},
+                      message: "La oferta se registró con éxito",
+                    });
+                  } else {
+                    console.log(err);
+                    res.json({
+                      code: 500,
+                      data: {},
+                      message: "Error interno en el registro de la nueva oferta",
+                    });
+                  }
+                }
+              );
+            }
+          }
+          
+        }       
+        else{
+          res.json({
+            code: 500,
+            data: {},
+            message: "Error interno en el registro de la nueva oferta",
+          });
+        }
       } else {
         console.log(err);
         res.json({
