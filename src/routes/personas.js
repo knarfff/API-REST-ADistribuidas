@@ -128,6 +128,7 @@ router.post("/usuario/getUsuario", (req, res) => {
     (err, rows, fields) => {
       if (!err) {
         if (rows[0] !== undefined) {
+          rows[0].foto=rows[0].foto.toString();
           res.json({
             code: 200,
             data: rows[0],
@@ -163,7 +164,9 @@ router.post("/usuario/getUsuarioPorCorreo", (req, res) => {
     [correo],
     (err, rows, fields) => {
       if (!err) {
+        console.log(rows[0])
         if (rows[0] !== undefined) {
+          rows[0].foto=rows[0].foto.toString();
           res.json({
             code: 200,
             data: rows[0],
@@ -545,7 +548,7 @@ router.post("/subastas/getProducto", (req, res) => {
   var data = [];
   const { idProducto } = req.body;
   mysqlConnect.query(
-    "SELECT subastaproducto.datetimeInicio,subastaproducto.dateTimeUltimaOferta, subastaproducto.estado, itemscatalogo.precioBase, subastaproducto.ultimaOferta FROM subastaproducto INNER JOIN itemscatalogo ON (itemscatalogo.producto=subastaproducto.producto) WHERE subastaproducto.producto=?",
+    "SELECT subastaproducto.documentoUltimaOferta, subastaproducto.datetimeInicio,subastaproducto.dateTimeUltimaOferta, subastaproducto.estado, itemscatalogo.precioBase, subastaproducto.ultimaOferta FROM subastaproducto INNER JOIN itemscatalogo ON (itemscatalogo.producto=subastaproducto.producto) WHERE subastaproducto.producto=?",
     [idProducto],
     (err, rows, fields) => {
       if (!err) {
@@ -655,11 +658,102 @@ router.post("/subastas/getProducto", (req, res) => {
               }
             })
         }
-        else if(actualDatetime>finishDatetime && rows[0].estado=="iniciada"){
-          console.log(rows[0]["ultimaOferta"])
+        else if(actualDatetime>finishDatetime && rows[0].estado=="iniciada" && rows[0]["documentoUltimaOferta"]!=null){
+          console.log(rows[0]["documentoUltimaOferta"])
           mysqlConnect.query(
             "UPDATE subastaproducto SET estado = 'finalizada', precioVenta = ? WHERE producto = ?;",
             [rows[0]["ultimaOferta"],idProducto], ()=>{
+              if (!err) {
+                mysqlConnect.query(
+                  "SELECT subastaproducto.datetimeInicio, productos.identificador as idProducto,subastas.identificador as idSubasta,itemscatalogo.nombre,itemscatalogo.moneda,itemscatalogo.precioBase, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.precioVenta, productos.tipo, personas.nombre as duenioActual, personas.documento, productos.descripcionCompleta, productos.artista,productos.fechaArte,productos.historia,subastas.categoria,subastaproducto.estado FROM productos INNER JOIN subastaproducto ON (productos.identificador=subastaproducto.producto) INNER JOIN itemscatalogo ON (productos.identificador=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (productos.duenio=personas.identificador) WHERE productos.identificador= ?",
+                  [idProducto],
+                  (err, rows, fields) => {
+                    const producto = {
+                      idProducto: rows[0]["idProducto"],
+                      idSubasta: rows[0]["idSubasta"],
+                      nombre: rows[0]["nombre"],
+                      precioBase: rows[0]["precioBase"],
+                      ultimaOferta: rows[0]["ultimaOferta"],
+                      dateTimeUltimaOferta: rows[0]["dateTimeUltimaOferta"],
+                      documentoUltimaOferta: rows[0]["documentoUltimaOferta"],
+                      precioVenta: rows[0]["precioVenta"],
+                      tipo: rows[0]["tipo"],
+                      duenioActual: rows[0]["duenioActual"],
+                      documentoDuenioActual: rows[0]["documento"],
+                      descripcion: rows[0]["descripcionCompleta"],
+                      numeroItem: rows[0]["idProducto"],
+                      moneda: rows[0]["moneda"],
+                      arte: {
+                        artista: rows[0]["artista"],
+                        fechaArte: rows[0]["fechaArte"],
+                        historia: rows[0]["historia"],
+                      },
+                      fotos: [],
+                      categoria: rows[0]["categoria"],
+                      estado: rows[0]["estado"],
+                      datetimeInicio: rows[0]["datetimeInicio"]
+                    };
+                    //data = JSON.stringify(producto);
+                    if (!err) {
+                      mysqlConnect.query(
+                        "SELECT fotos.foto FROM fotos WHERE producto=?;",
+                        [idProducto],
+                        (err, rows, fields) => {
+                          if (!err) {
+                            var fotos=[];
+                            for(var element in rows){
+                              //console.log(rows[element].foto.toString());
+                              var foto={
+                                foto:rows[element].foto.toString()
+                              }
+                              fotos.push(foto);
+                            }
+                            //console.log(fotos)
+                            producto.fotos=fotos;
+                            //console.log(producto)
+                            data = JSON.stringify(producto);
+                            res.json({
+                              code: 200,
+                              data: data,
+                              message: "Devuelve toda la información del producto consultado",
+                            });
+                          }
+                          else {
+                            console.log(err);
+                            res.json({
+                              code: 500,
+                              data: {},
+                              message: "Error",
+                            });
+                          }
+                        });
+                      
+                    } else {
+                      console.log(err);
+                      res.json({
+                        code: 500,
+                        data: {},
+                        message: "Error",
+                      });
+                    }
+                  }
+                );
+              }
+              else{
+                res.json({
+                  code: 500,
+                  data: {},
+                  message: "Error",
+                });
+              }
+            
+            })
+        }
+        else if(actualDatetime>finishDatetime && rows[0].estado=="iniciada" && rows[0]["documentoUltimaOferta"]==null){
+          console.log(rows[0]["documentoUltimaOferta"])
+          mysqlConnect.query(
+            "UPDATE subastaproducto SET estado = 'finalizada' WHERE producto = ?;",
+            [idProducto], ()=>{
               if (!err) {
                 mysqlConnect.query(
                   "SELECT subastaproducto.datetimeInicio, productos.identificador as idProducto,subastas.identificador as idSubasta,itemscatalogo.nombre,itemscatalogo.moneda,itemscatalogo.precioBase, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.precioVenta, productos.tipo, personas.nombre as duenioActual, personas.documento, productos.descripcionCompleta, productos.artista,productos.fechaArte,productos.historia,subastas.categoria,subastaproducto.estado FROM productos INNER JOIN subastaproducto ON (productos.identificador=subastaproducto.producto) INNER JOIN itemscatalogo ON (productos.identificador=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (productos.duenio=personas.identificador) WHERE productos.identificador= ?",
@@ -837,6 +931,7 @@ router.post("/subastas/getProducto", (req, res) => {
             })
         }
         else{
+          console.log(rows[0]["documentoUltimaOferta"])
           mysqlConnect.query(
             "SELECT subastaproducto.datetimeInicio, productos.identificador as idProducto,subastas.identificador as idSubasta,itemscatalogo.nombre,itemscatalogo.moneda,itemscatalogo.precioBase, subastaproducto.ultimaOferta, subastaproducto.dateTimeUltimaOferta, subastaproducto.documentoUltimaOferta, subastaproducto.precioVenta, productos.tipo, personas.nombre as duenioActual, personas.documento, productos.descripcionCompleta, productos.artista,productos.fechaArte,productos.historia,subastas.categoria,subastaproducto.estado FROM productos INNER JOIN subastaproducto ON (productos.identificador=subastaproducto.producto) INNER JOIN itemscatalogo ON (productos.identificador=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (productos.duenio=personas.identificador) WHERE productos.identificador= ?",
             [idProducto],
