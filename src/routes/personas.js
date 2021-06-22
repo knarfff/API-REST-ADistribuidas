@@ -1213,11 +1213,31 @@ router.post("/subastas/nuevaOferta", (req, res) => {
                 ],
                 (err, rows, fields) => {
                   if (!err) {
-                    res.json({
-                      code: 201,
-                      data: {},
-                      message: "La oferta se registró con éxito",
-                    });
+                    mysqlConnect.query(
+                      "INSERT INTO historialOfertas (producto,valorOferta, documento) VALUES (?,?,?);",
+                      [
+                        idProducto,
+                        valorOferta,
+                        documento
+                      ],
+                      (err, rows, fields) => {
+                        if (!err) {
+                          res.json({
+                            code: 201,
+                            data: {},
+                            message: "La oferta se registró con éxito",
+                          });
+                        } else {
+                          console.log(err);
+                          res.json({
+                            code: 500,
+                            data: {},
+                            message:
+                              "Error interno en el registro de la nueva oferta",
+                          });
+                        }
+                      }
+                    );
                   } else {
                     console.log(err);
                     res.json({
@@ -1309,30 +1329,35 @@ router.post("/usuario/altaCuentaBancaria", (req, res) => {
     documento,
     nombreMetodo,
     nombreTitular,
+    documentoTitular,
     banco,
     cbu,
     alias,
     numeroCuenta,
     cuit,
+    tipoMetodo,
   } = req.body;
+  console.log(req.body)
   const query =
     "SELECT personas.identificador FROM personas WHERE personas.documento = ?;";
   mysqlConnect.query(query, [documento], (err, rows, fields) => {
     if (!err) {
       console.log(rows[0].identificador);
       const query2 =
-        "INSERT INTO metododepago (nombreMetodo, nombreTitular, duenio, banco, cbu, alias, numeroCuenta, cuit) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+        "INSERT INTO metododepago (nombreMetodo, nombreTitular, documentoTitular, duenio, banco, cbu, alias, numeroCuenta, cuit, tipoMetodo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
       mysqlConnect.query(
         query2,
         [
           nombreMetodo,
           nombreTitular,
+          documentoTitular,
           rows[0].identificador,
           banco,
           cbu,
           alias,
           numeroCuenta,
           cuit,
+          tipoMetodo
         ],
         (err, rows, fields) => {
           if (!err) {
@@ -1365,27 +1390,38 @@ router.post("/usuario/altaTarjeta", (req, res) => {
     documento,
     nombreMetodo,
     nombreTitular,
+    documentoTitular,
     numeroTarjeta,
     codigoSeguridad,
     vencimiento,
     tipoTarjeta,
+    tarjeta,
+    banco,
+    tipoMetodo
   } = req.body;
+  
+  
   const query =
     "SELECT personas.identificador FROM personas WHERE personas.documento = ?;";
   mysqlConnect.query(query, [documento], (err, rows, fields) => {
     if (!err) {
+      console.log(new Date(vencimiento));
       const query2 =
-        "INSERT INTO metododepago (nombreMetodo, nombreTitular, duenio, numeroTarjeta, codigoSeguridad, vencimiento, tipoTarjeta) VALUES (?, ?, ?, ?, ?, ?, ?);";
+        "INSERT INTO metododepago (nombreMetodo, nombreTitular, duenio, documentoTitular, numeroTarjeta, codigoSeguridad, vencimiento, tipoTarjeta, tarjeta, banco, tipoMetodo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
       mysqlConnect.query(
         query2,
         [
           nombreMetodo,
           nombreTitular,
           rows[0].identificador,
+          documentoTitular,
           numeroTarjeta,
           codigoSeguridad,
-          vencimiento,
+          new Date(vencimiento),
           tipoTarjeta,
+          tarjeta,
+          banco,
+          tipoMetodo
         ],
         (err, rows, fields) => {
           if (!err) {
@@ -1395,6 +1431,7 @@ router.post("/usuario/altaTarjeta", (req, res) => {
               message: "Se dio de alta la nueva tarjeta del usuario con éxito",
             });
           } else {
+            console.log(err)
             res.json({
               code: 500,
               data: {},
@@ -1417,24 +1454,30 @@ router.post("/usuario/modificarCuentaBancaria", (req, res) => {
     idMetodo,
     nombreMetodo,
     nombreTitular,
+    documentoTitular,
     banco,
     cbu,
     alias,
     numeroCuenta,
     cuit,
+    tipoMetodo,
+    estado
   } = req.body;
   const query =
-    "UPDATE metododepago SET nombreMetodo = ?, nombreTitular = ?, banco = ?, cbu = ?, alias = ?, numeroCuenta = ?, cuit = ? WHERE idMetodo = ?;";
+    "UPDATE metododepago SET nombreMetodo = ?, nombreTitular = ?, documentoTitular=?, banco = ?, cbu = ?, alias = ?, numeroCuenta = ?, cuit = ?, tipoMetodo=?, estado=? WHERE idMetodo = ?;";
   mysqlConnect.query(
     query,
     [
       nombreMetodo,
       nombreTitular,
+      documentoTitular,
       banco,
       cbu,
       alias,
       numeroCuenta,
       cuit,
+      tipoMetodo,
+      estado,
       idMetodo,
     ],
     (err, rows, fields) => {
@@ -1464,23 +1507,34 @@ router.post("/usuario/modificarTarjeta", (req, res) => {
     idMetodo,
     nombreMetodo,
     nombreTitular,
+    documentoTitular,
     numeroTarjeta,
     codigoSeguridad,
     vencimiento,
     tipoTarjeta,
+    tarjeta,
+    banco,
+    tipoMetodo, 
+    estado
   } = req.body;
   const query =
-    "UPDATE metododepago SET nombreMetodo = ?, nombreTitular = ?, numeroTarjeta = ?, codigoSeguridad = ?, vencimiento = ?, tipoTarjeta = ? WHERE idMetodo = ?;";
+    "UPDATE metododepago SET nombreMetodo = ?, nombreTitular = ?, documentoTitular=?, numeroTarjeta = ?, codigoSeguridad = ?, vencimiento = ?, tipoTarjeta = ?, tarjeta=?, banco=?, tipoMetodo=?, estado=? WHERE idMetodo = ?;";
   mysqlConnect.query(
     query,
     [
+
       nombreMetodo,
       nombreTitular,
+      documentoTitular,
       numeroTarjeta,
       codigoSeguridad,
-      vencimiento,
+      new Date(vencimiento),
       tipoTarjeta,
-      idMetodo,
+      tarjeta,
+      banco,
+      tipoMetodo,
+      estado,
+      idMetodo
     ],
     (err, rows, fields) => {
       if (!err) {
@@ -1523,5 +1577,394 @@ router.post("/usuario/bajaMetodoPago", (req, res) => {
     }
   })
 })
+
+// Permite generar una nueva solicitud de subasta de un artículo que el usuario quiere subastar.
+
+router.post("/usuario/altaSolicitudSubasta", (req, res) => {
+  const {
+    documentoDuenio,
+    nombreProducto,
+    descripcion,
+    datosAdicionales,
+    fotos,
+  } = req.body;
+  console.log(req.body)
+  const query =
+    "SELECT personas.identificador FROM personas WHERE personas.documento=?";
+  mysqlConnect.query(
+    query,
+    [
+      documentoDuenio,
+    ],
+    (err, rows, fields) => {
+      if (!err) {
+        const query =
+        "INSERT INTO productosUsuario (nombreProducto, descripcion, datosAdicionales, fechaSolicitud, monedaProducto, duenio) VALUES (?, ?, ?, ?, ?, ?);";
+        var fechaSolicitud = new Date();
+        monedaProducto='peso';
+        mysqlConnect.query(
+          query,
+          [
+            nombreProducto,
+            descripcion,
+            datosAdicionales,
+            fechaSolicitud,
+            monedaProducto,
+            rows[0].identificador
+          ],
+          (err, result,rows, fields) => {
+            if (!err) {
+              console.log(result.insertId)
+              const query =
+                "INSERT INTO fotosproductosusuario (productoUsuario, foto) VALUES ?;";
+              var values=[];
+              for(var element in fotos){
+                console.log(fotos[element].foto)
+                var newValue=[result.insertId,fotos[element].foto];
+                values.push(newValue);
+                
+              }
+              console.log(values)
+              mysqlConnect.query(
+                query,
+                [values],
+                (err, result,rows, fields) => {
+                  if (!err) {
+                    res.json({
+                      code: 201,
+                      data: {},
+                      message:
+                        "Indica que la solicitud fue dada de alta satisfactoriamente",
+                    });
+                  } else {
+                    console.log(err);
+                    res.json({
+                      code: 500,
+                      data: {},
+                      message: "Error",
+                    });
+                  }
+                }
+              );
+              
+            } else {
+              console.log(err);
+              res.json({
+                code: 500,
+                data: {},
+                message: "Error",
+              });
+            }
+          }
+        );
+
+      } else {
+        console.log(err);
+        res.json({
+          code: 500,
+          data: {},
+          message: "Error",
+        });
+      }
+    }
+  );
+
+  
+});
+
+// Permite obtener la lista de artículos que el usuario envió a la empresa para ser revisados y subastados.
+
+router.post("/usuario/getProductosUsuario", (req, res) => {
+  var data = [];
+  const { documentoDuenio } = req.body;
+  const query =
+    "SELECT productosUsuario.idProducto, personas.documento, productosUsuario.nombreProducto, productosUsuario.descripcion, productosUsuario.datosAdicionales, productosUsuario.fechaSolicitud, productosUsuario.valorBase, productosUsuario.porcentajeComision, productosUsuario.gastosDevolucion, productosUsuario.monedaProducto, productosUsuario.estado FROM productosUsuario INNER JOIN personas ON (productosusuario.duenio = personas.identificador) WHERE personas.documento = ?;";
+  mysqlConnect.query(query, [documentoDuenio], (err, rows, fields) => {
+    for (var element in rows) {
+      const productosUsuarios = {
+        idProducto: rows[element]["idProducto"],
+        documentoDuenio: rows[element]["documento"],
+        nombreProducto: rows[element]["nombreProducto"],
+        descripcion: rows[element]["descripcion"],
+        datosAdicionales: rows[element]["datosAdicionales"],
+        fechaSolicitud: rows[element]["fechaSolicitud"],
+        valorBase: rows[element]["valorBase"],
+        porcentajeComision: rows[element]["porcentajeComision"],
+        gastosDevolucion: rows[element]["gastosDevolucion"],
+        monedaProducto: rows[element]["monedaProducto"],
+        estado: rows[element]["estado"],
+      };
+      //falta traer fotos e info de subasta
+      console.log(productosUsuarios);
+      data.push(productosUsuarios);
+    }
+    
+    if (!err) {
+      if (data.length > 0) {
+        data = JSON.stringify(data);
+        res.json({
+          code: 200,
+          data: data,
+          message:
+            "Devuelve una lista con información de los diferentes artículos enviados por el usuario",
+        });
+      } else {
+        res.json({
+          code: 204,
+          data: {},
+          message: "No hay información para ese documento",
+        });
+      }
+    } else {
+      console.log(err);
+      res.json({
+        code: 500,
+        data: {},
+        message: "Error",
+      });
+    }
+  });
+});
+
+// Permite obtener las fotos de un producto cargado por un usuario
+
+router.post("/usuario/getFotosProductoUsuario", (req, res) => {
+  var data = [];
+  const { idProducto } = req.body;
+  const query =
+    "SELECT foto FROM fotosproductosusuario WHERE productoUsuario=?";
+  mysqlConnect.query(query, [idProducto], (err, rows, fields) => {
+    for (var element in rows) {
+      
+      var foto={foto:rows[element].foto.toString()};
+      console.log(foto);
+      data.push(foto);
+    }
+    if (!err) {
+      if (data.length > 0) {
+        data = JSON.stringify(data);
+        res.json({
+          code: 200,
+          data: data,
+          message:
+            "Devuelve una lista con las fotos del producto cargado por el usuario",
+        });
+      } else {
+        res.json({
+          code: 204,
+          data: {},
+          message: "No hay fotos para este producto",
+        });
+      }
+    } else {
+      console.log(err);
+      res.json({
+        code: 500,
+        data: {},
+        message: "Error",
+      });
+    }
+  });
+});
+
+// Confirma la aceptación por parte del usuario de una oferta realizada por la empresa con el precio base y la comisión por un artículo enviado para subastar modificando el estado de la misma.
+
+router.post("/usuario/aceptarOferta", (req, res) => {
+  const { idProducto } = req.body;
+  const query =
+    "UPDATE productosUsuario SET estado = 'pendiente-subasta' WHERE idProducto = ?;";
+  mysqlConnect.query(query, [idProducto], (err, rows, fields) => {
+    if (!err) {
+      res.json({
+        code: 201,
+        data: {},
+        message: "Indica que la oferta fue aceptada satisfactoriamente",
+      });
+    } else {
+      console.log(err);
+      res.json({
+        code: 500,
+        data: {},
+        message: "Error",
+      });
+    }
+  });
+});
+
+// Confirma el rechazo por parte del usuario de una oferta realizada por la empresa con el precio base y la comisión por un artículo enviado para subastar modificando el estado de la misma.
+
+router.post("/usuario/rechazarOferta", (req, res) => {
+  const { idProducto } = req.body;
+  const query =
+    "UPDATE productosUsuario SET estado = 'pendiente-devolucion' WHERE idProducto = ?;";
+  mysqlConnect.query(query, [idProducto], (err, rows, fields) => {
+    if (!err) {
+      res.json({
+        code: 201,
+        data: {},
+        message: "Indica que la oferta fue rechazada satisfactoriamente",
+      });
+    } else {
+      console.log(err);
+      res.json({
+        code: 500,
+        data: {},
+        message: "Error",
+      });
+    }
+  });
+});
+
+// Recupera el historial de pujas del usuario
+
+router.post("/usuario/getHistorial", (req, res) => {
+  const { documento } = req.body;
+  const query =
+    "SELECT historialofertas.identificador,historialofertas.producto,historialofertas.valorOferta,itemscatalogo.nombre, itemscatalogo.moneda, subastaproducto.estado, subastas.titulo, subastas.fecha, subastas.categoria, personas.nombre as rematador, subastaproducto.documentoUltimaOferta, subastaproducto.ultimaOferta  FROM historialofertas INNER JOIN itemscatalogo ON (historialofertas.producto=itemscatalogo.producto) INNER JOIN subastaproducto ON (subastaproducto.producto=historialofertas.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) INNER JOIN personas ON (subastas.subastador=personas.identificador) WHERE historialofertas.documento=?;";
+  mysqlConnect.query(query, [documento], (err, rows, fields) => {
+    if (!err) {
+      var data=[];
+      for(var element in rows){
+        var oferta={
+          idOferta:rows[element].identificador,
+          idProducto: rows[element].producto,
+          nombreProducto: rows[element].nombre,
+          tituloSubasta: rows[element].titulo,
+          fechaSubasta: rows[element].fecha,
+          nombreRematador: rows[element].rematador,
+          categoriaSubasta: rows[element].categoria,
+          valorOferta: rows[element].valorOferta,
+          estadoSubastaProducto: rows[element].estado,
+          monedaSubasta:rows[element].moneda,
+          ganador: false
+        }
+        if(documento.toString()==rows[element].documentoUltimaOferta && rows[element].estado=='finalizada' && rows[element].ultimaOferta==rows[element].valorOferta){
+          oferta.ganador=true;
+        }
+        data.push(oferta);
+      }
+      res.json({
+        code: 200,
+        data: JSON.stringify(data),
+        message: "Devuelve una lista con todas las ofertas realizadas por el usuario",
+      });
+    } else {
+      console.log(err);
+      res.json({
+        code: 500,
+        data: {},
+        message: "Error",
+      });
+    }
+  });
+});
+
+
+// Calcula las estadisticas de participacion del usuario en subastas
+
+router.post("/usuario/getEstadisticas", (req, res) => {
+  const { documento } = req.body;
+  const query =
+    "SELECT COUNT(historialofertas.producto) FROM historialofertas WHERE historialofertas.documento=? GROUP BY historialofertas.producto;";
+  mysqlConnect.query(query, [documento], (err, rows, fields) => {
+    if (!err) {
+      console.log(rows[0]['COUNT(historialofertas.producto)'])
+      var data={
+        pujasTotales:null,
+        subastasTotales:rows[0]['COUNT(historialofertas.producto)'],
+        porcentajeGanadas: null,
+        porcentajeParticipacionComun: null,
+        porcentajeParticipacionEspecial: null,
+        porcentajeParticipacionPlata: null,
+        porcentajeParticipacionOro: null,
+        porcentajeParticipacionPlatino: null,
+      }
+      const query =
+        "SELECT COUNT(subastaproducto.documentoUltimaOferta) FROM subastaproducto WHERE subastaproducto.documentoUltimaOferta=? AND subastaproducto.estado='finalizada';";
+      mysqlConnect.query(query, [documento], (err, rows, fields) => {
+        if (!err) {
+          console.log(rows[0]['COUNT(subastaproducto.documentoUltimaOferta)'])
+          data.porcentajeGanadas=(rows[0]['COUNT(subastaproducto.documentoUltimaOferta)']/data.subastasTotales)*100;
+          const query =
+            "SELECT historialofertas.producto, subastas.categoria FROM historialofertas INNER JOIN itemscatalogo ON (itemscatalogo.producto=historialofertas.producto) INNER JOIN catalogos ON (catalogos.identificador=itemscatalogo.catalogo) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) WHERE historialofertas.documento=? GROUP BY historialofertas.producto;";
+          mysqlConnect.query(query, [documento], (err, rows, fields) => {
+            if (!err) {
+                console.log(rows)
+                var cantComun=0;
+                var cantEspecial=0;
+                var cantPlata=0;
+                var cantOro=0;
+                var cantPlatino=0;
+                for(var element in rows){
+                  if(rows[element].categoria=='comun'){
+                    cantComun=cantComun+1;
+                  }
+                  else if(rows[element].categoria=='especial'){
+                    cantEspecial=cantEspecial+1;
+                  }
+                  else if(rows[element].categoria=='plata'){
+                    cantPlata=cantPlata+1;
+                  }
+                  else if(rows[element].categoria=='oro'){
+                    cantOro=cantOro+1;
+                  }
+                  else if(rows[element].categoria=='platino'){
+                    cantPlatino=cantPlatino+1;
+                  }
+                }
+                data.porcentajeParticipacionComun=(cantComun/data.subastasTotales)*100;
+                data.porcentajeParticipacionEspecial=(cantEspecial/data.subastasTotales)*100;
+                data.porcentajeParticipacionPlata=(cantPlata/data.subastasTotales)*100;
+                data.porcentajeParticipacionOro=(cantOro/data.subastasTotales)*100;
+                data.porcentajeParticipacionPlatino=(cantPlatino/data.subastasTotales)*100;
+                const query =
+                "SELECT COUNT(historialofertas.producto) FROM historialofertas WHERE historialofertas.documento=?";
+                mysqlConnect.query(query, [documento], (err, rows, fields) => {
+                  if (!err) {
+                      data.pujasTotales= rows[0]['COUNT(historialofertas.producto)'];                     
+                      res.json({
+                      code: 200,
+                      data: JSON.stringify(data),
+                      message: "Devuelve una lista con todas las ofertas realizadas por el usuario",
+                    })
+                  } else {
+                    console.log(err);
+                    res.json({
+                      code: 500,
+                      data: {},
+                      message: "Error",
+                    });
+                  }
+                });
+              
+            } else {
+              console.log(err);
+              res.json({
+                code: 500,
+                data: {},
+                message: "Error",
+              });
+            }
+          });
+        } else {
+          console.log(err);
+          res.json({
+            code: 500,
+            data: {},
+            message: "Error",
+          });
+        }
+      });
+    
+    } else {
+      console.log(err);
+      res.json({
+        code: 500,
+        data: {},
+        message: "Error",
+      });
+    }
+  });
+});
 
 module.exports = router;
