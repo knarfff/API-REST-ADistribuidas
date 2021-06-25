@@ -1678,7 +1678,7 @@ router.post("/usuario/getProductosUsuario", (req, res) => {
   var data = [];
   const { documentoDuenio } = req.body;
   const query =
-    "SELECT productosUsuario.idProducto, personas.documento, productosUsuario.nombreProducto, productosUsuario.descripcion, productosUsuario.datosAdicionales, productosUsuario.fechaSolicitud, productosUsuario.valorBase, productosUsuario.porcentajeComision, productosUsuario.gastosDevolucion, productosUsuario.monedaProducto, productosUsuario.estado FROM productosUsuario INNER JOIN personas ON (productosusuario.duenio = personas.identificador) WHERE personas.documento = ?;";
+    "SELECT productosUsuario.idProducto, personas.documento, productosUsuario.nombreProducto, productosUsuario.descripcion, productosUsuario.datosAdicionales, productosUsuario.fechaSolicitud, productosUsuario.valorBase, productosUsuario.porcentajeComision, productosUsuario.gastosDevolucion, productosUsuario.monedaProducto, productosUsuario.estado FROM productosUsuario INNER JOIN personas ON (productosusuario.duenio = personas.identificador) WHERE personas.documento = ? AND productosUsuario.producto IS null;";
   mysqlConnect.query(query, [documentoDuenio], (err, rows, fields) => {
     for (var element in rows) {
       const productosUsuarios = {
@@ -1693,28 +1693,65 @@ router.post("/usuario/getProductosUsuario", (req, res) => {
         gastosDevolucion: rows[element]["gastosDevolucion"],
         monedaProducto: rows[element]["monedaProducto"],
         estado: rows[element]["estado"],
+
       };
       //falta traer fotos e info de subasta
       console.log(productosUsuarios);
       data.push(productosUsuarios);
     }
-    
+    console.log(data)
     if (!err) {
-      if (data.length > 0) {
-        data = JSON.stringify(data);
-        res.json({
-          code: 200,
-          data: data,
-          message:
-            "Devuelve una lista con información de los diferentes artículos enviados por el usuario",
-        });
-      } else {
-        res.json({
-          code: 204,
-          data: {},
-          message: "No hay información para ese documento",
-        });
-      }
+      const query =
+        "SELECT productosUsuario.idProducto, personas.documento, productosUsuario.nombreProducto, productosUsuario.descripcion, productosUsuario.datosAdicionales, productosUsuario.fechaSolicitud, productosUsuario.valorBase, productosUsuario.porcentajeComision, productosUsuario.gastosDevolucion, productosUsuario.monedaProducto, productosUsuario.estado, subastas.identificador as idSubastaAsignada, subastas.titulo as nombreSubastaAsignada, subastas.fecha as fechaSubastaAsignada FROM productosUsuario INNER JOIN personas ON (productosusuario.duenio = personas.identificador) INNER JOIN itemscatalogo ON (productosUsuario.producto=itemscatalogo.producto) INNER JOIN catalogos ON (itemscatalogo.catalogo=catalogos.identificador) INNER JOIN subastas ON (catalogos.subasta=subastas.identificador) WHERE personas.documento = ?;";
+      mysqlConnect.query(query, [documentoDuenio], (err, rows, fields) => {
+        for (var element in rows) {
+          const productosUsuarios = {
+            idProducto: rows[element]["idProducto"],
+            documentoDuenio: rows[element]["documento"],
+            nombreProducto: rows[element]["nombreProducto"],
+            descripcion: rows[element]["descripcion"],
+            datosAdicionales: rows[element]["datosAdicionales"],
+            fechaSolicitud: rows[element]["fechaSolicitud"],
+            valorBase: rows[element]["valorBase"],
+            porcentajeComision: rows[element]["porcentajeComision"],
+            gastosDevolucion: rows[element]["gastosDevolucion"],
+            monedaProducto: rows[element]["monedaProducto"],
+            estado: rows[element]["estado"],
+            idSubastaAsignada:rows[element]["idSubastaAsignada"],
+            nombreSubastaAsignada:rows[element]["nombreSubastaAsignada"],
+            fechaSubastaAsignada:rows[element]["fechaSubastaAsignada"],
+    
+          };
+          //falta traer fotos e info de subasta
+          console.log(productosUsuarios);
+          data.push(productosUsuarios);
+        }
+        
+        if (!err) {
+          if (data.length > 0) {
+            data = JSON.stringify(data);
+            res.json({
+              code: 200,
+              data: data,
+              message:
+                "Devuelve una lista con información de los diferentes artículos enviados por el usuario",
+            });
+          } else {
+            res.json({
+              code: 204,
+              data: {},
+              message: "No hay productos para este usuario",
+            });
+          }
+        } else {
+          console.log(err);
+          res.json({
+            code: 500,
+            data: {},
+            message: "Error",
+          });
+        }
+      });
     } else {
       console.log(err);
       res.json({
@@ -1865,13 +1902,12 @@ router.post("/usuario/getHistorial", (req, res) => {
 router.post("/usuario/getEstadisticas", (req, res) => {
   const { documento } = req.body;
   const query =
-    "SELECT COUNT(historialofertas.producto) FROM historialofertas WHERE historialofertas.documento=? GROUP BY historialofertas.producto;";
+    "SELECT COUNT(*) as cantidad FROM (SELECT * FROM historialofertas WHERE documento=39980232 GROUP BY producto) as historial;";
   mysqlConnect.query(query, [documento], (err, rows, fields) => {
     if (!err) {
-      console.log(rows[0]['COUNT(historialofertas.producto)'])
       var data={
         pujasTotales:null,
-        subastasTotales:rows[0]['COUNT(historialofertas.producto)'],
+        subastasTotales:rows[0]['cantidad'],
         porcentajeGanadas: null,
         porcentajeParticipacionComun: null,
         porcentajeParticipacionEspecial: null,
